@@ -26,7 +26,7 @@ logfile_init <- function()
   if (isWindows())
     prefix <- base::getwd()
   else
-    prefix <- tools::file_path_as_absolute("~")
+    prefix <- tools::file_path_as_absolute("/work/genomics/Projects/chengky/tmp")
   logfile <- paste0(prefix, "/.remoterserverlog")
   
   if (file.exists(logfile))
