@@ -35,46 +35,52 @@ swd <- function() {
 
 s <- function(EXPR, input, prnt=TRUE) {
   if (missing(input)) input <- deparse(substitute(EXPR))
-  if (grepl("((^|\n|\\{) *(s|swd|dn|dnl|rg|up|rc|rd)\\()|(<- *rg\\()", paste(input, collapse="\n"))) stop("It seems that the input expression should not be used within s(), please double check.")
+  if (grepl("(^|\n|\\{|\\(|\\[|<-) *(s|swd|dn|dnl|rg|rgl|up|rc|rd)\\(", paste(input, collapse="\n"))) stop("It seems that the input expression should not be used within s(), please double check.")
   remoter_client_sendrecv(input=input, env=globalenv())
   if (prnt) remoter_repl_printer()
   remoter_client_objcleanup(globalenv())
 }
 
 
-dn <- function(object, newname, env=.GlobalEnv) {
-  object <- deparse(substitute(object))
-  if (missing(newname)) newname <- object else newname <- deparse(substitute(newname))
-  env <- deparse(substitute(env))
-  s(input=sprintf('s2c(%s, "%s", %s)', object, newname, env), prnt=FALSE)
-}
-
-
 rg <- function(EXPR, input) {
   if (missing(input)) input <- deparse(substitute(EXPR))
-  if (grepl("((^|\n|\\{) *(s|swd|dn|dnl|rg|up|rc|rd)\\()|(<- *rg\\()", paste(input, collapse="\n"))) stop("It seems that the input expression should not be used within rg(), please double check.")
   s(input=c(".tmp <- ", input))
-  dn(.tmp, res, parent.frame(5)) # parent.frame(5) finally get `res` to appear here in the running env
+  s(s2c(.tmp, "res", parent.frame(4))) # parent.frame(4) gets `res` into the current running environment of rg()
   s(rm(.tmp))
   res
 }
 
 
-dnl <- function(x, newname, env=.GlobalEnv) {
-  x <- deparse(substitute(x))
-  if (missing(newname)) newname <- x else newname <- deparse(substitute(newname))
-  ns <- rg(input=sprintf("{if (is.null(names(%s))) 1:length(%s) else names(%s)}", x, x, x))
+dn <- function(object) {
+  object <- deparse(substitute(object))
+  res <- rg(input=object)
+  assign(object, value=res, envir=parent.frame())
+}
+
+
+rgl <- function(EXPR, input) {
+  if (missing(input)) input <- deparse(substitute(EXPR))
+  s(input=c(".tmp1 <- ", input))
+  ns <- rg(input="{if (is.null(names(.tmp1))) 1:length(.tmp1) else names(.tmp1)}")
   res <- list()
   if (is.numeric(ns)) {
     for (i in ns) {
-      res[[i]] <- rg(input=sprintf('%s[[%s]]', x, i))
+      res[[i]] <- rg(input=sprintf(".tmp1[[%d]]", i))
     }
   } else {
     for (i in ns) {
-      res[[i]] <- rg(input=sprintf('%s[["%s"]]', x, i))
+      res[[i]] <- rg(input=sprintf('.tmp1[["%s"]]', i))
     }
   }
-  assign(newname, value=res, envir=env)
+  s(rm(.tmp1))
+  res
+}
+
+
+dnl <- function(object) {
+  object <- deparse(substitute(object))
+  res <- rgl(input=object)
+  assign(object, value=res, envir=parent.frame())
 }
 
 

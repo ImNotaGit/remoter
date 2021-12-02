@@ -38,7 +38,7 @@ remoter_show_errors <- function()
 
 
 
-remoter_show_warnings <- function(force=FALSE)
+remoter_show_warnings <- function(force=TRUE)
 {
   warnings <- get.status(warnings)
   nwarnings <- length(warnings)
