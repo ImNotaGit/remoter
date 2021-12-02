@@ -35,6 +35,7 @@ swd <- function() {
 
 s <- function(EXPR, input, prnt=TRUE) {
   if (missing(input)) input <- deparse(substitute(EXPR))
+  if (grepl("((^|\n|\\{) *(s|swd|dn|dnl|rg|up|rc|rd)\\()|(<- *rg\\()", paste(input, collapse="\n"))) stop("It seems that the input expression should not be used within s(), please double check.")
   remoter_client_sendrecv(input=input, env=globalenv())
   if (prnt) remoter_repl_printer()
   remoter_client_objcleanup(globalenv())
