@@ -52,7 +52,8 @@ dn <- function(object, newname, env=.GlobalEnv) {
 
 rg <- function(EXPR, input) {
   if (missing(input)) input <- deparse(substitute(EXPR))
-  s(input=sprintf(".tmp <- %s", input))
+  if (grepl("((^|\n|\\{) *(s|swd|dn|dnl|rg|up|rc|rd)\\()|(<- *rg\\()", paste(input, collapse="\n"))) stop("It seems that the input expression should not be used within rg(), please double check.")
+  s(input=c(".tmp <- ", input))
   dn(.tmp, res, parent.frame(5)) # parent.frame(5) finally get `res` to appear here in the running env
   s(rm(.tmp))
   res
